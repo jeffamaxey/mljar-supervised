@@ -22,8 +22,7 @@ def logloss(y_true, y_predicted, sample_weight=None):
     epsilon = 1e-6
     y_predicted = sp.maximum(epsilon, y_predicted)
     y_predicted = sp.minimum(1 - epsilon, y_predicted)
-    ll = log_loss(y_true, y_predicted, sample_weight=sample_weight)
-    return ll
+    return log_loss(y_true, y_predicted, sample_weight=sample_weight)
 
 
 def rmse(y_true, y_predicted, sample_weight=None):
@@ -408,20 +407,13 @@ class Metric(object):
         return self.metric(y_true, y_predicted, sample_weight=sample_weight)
 
     def improvement(self, previous, current):
-        if self.minimize_direction:
-            return current < previous
-        return current > previous
+        return current < previous if self.minimize_direction else current > previous
 
     def get_maximum(self):
-        if self.minimize_direction:
-            return 10e12
-        else:
-            return -10e12
+        return 10e12 if self.minimize_direction else -10e12
 
     def worst_value(self):
-        if self.minimize_direction:
-            return np.Inf
-        return -np.Inf
+        return np.Inf if self.minimize_direction else -np.Inf
 
     def get_minimize_direction(self):
         return self.minimize_direction

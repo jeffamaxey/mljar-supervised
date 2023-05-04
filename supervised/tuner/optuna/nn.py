@@ -63,7 +63,7 @@ class NeuralNetworkObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in NeuralNetworkObjective", str(e))
+            print("Exception in NeuralNetworkObjective", e)
             return None
 
         return score

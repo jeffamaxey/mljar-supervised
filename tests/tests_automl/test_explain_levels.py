@@ -86,39 +86,13 @@ class AutoMLExplainLevelsTest(unittest.TestCase):
             os.path.join(self.automl_dir, f'1_Default_{alg.replace(" ", "")}')
         )
 
-        # There should be files with:
-        # - permutation importance
-        # - shap importance
-        # - shap dependence
-        # - shap decisions
-
-        # Check permutation importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" not in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" not in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap dependence
-        produced = False
-        for f in result_files:
-            if "shap_dependence" in f:
-                produced = True
-                break
+        produced = any("shap_dependence" in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap decisions
-        produced = False
-        for f in result_files:
-            if "decisions.png" in f:
-                produced = True
-                break
+        produced = any("decisions.png" in f for f in result_files)
         self.assertTrue(produced)
 
     def test_explain_default(self):
@@ -152,46 +126,15 @@ class AutoMLExplainLevelsTest(unittest.TestCase):
 
         result_files = os.listdir(os.path.join(self.automl_dir, "1_Linear"))
 
-        # There should be no files with:
-        # - permutation importance
-        # - shap importance
-        # - shap dependence
-        # - shap decisions
-
-        # Check permutation importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" not in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" not in f for f in result_files)
         self.assertFalse(produced)
-        # Check shap importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" in f for f in result_files)
         self.assertFalse(produced)
-        # Check shap dependence
-        produced = False
-        for f in result_files:
-            if "dependence.png" in f:
-                produced = True
-                break
+        produced = any("dependence.png" in f for f in result_files)
         self.assertFalse(produced)
-        # Check shap decisions
-        produced = False
-        for f in result_files:
-            if "decisions.png" in f:
-                produced = True
-                break
+        produced = any("decisions.png" in f for f in result_files)
         self.assertFalse(produced)
-        # Check coefficients
-        produced = False
-        for f in result_files:
-            if "coefs.csv" in f:
-                produced = True
-                break
+        produced = any("coefs.csv" in f for f in result_files)
         self.assertFalse(produced)
 
     def test_explain_just_permutation_importance(self):
@@ -219,39 +162,13 @@ class AutoMLExplainLevelsTest(unittest.TestCase):
 
         result_files = os.listdir(os.path.join(self.automl_dir, "1_Default_Xgboost"))
 
-        # There should be no files with:
-        # - permutation importance
-        # - shap importance
-        # - shap dependence
-        # - shap decisions
-
-        # Check permutation importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" not in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" not in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" in f for f in result_files)
         self.assertFalse(produced)
-        # Check shap dependence
-        produced = False
-        for f in result_files:
-            if "dependence.png" in f:
-                produced = True
-                break
+        produced = any("dependence.png" in f for f in result_files)
         self.assertFalse(produced)
-        # Check shap decisions
-        produced = False
-        for f in result_files:
-            if "decisions.png" in f:
-                produced = True
-                break
+        produced = any("decisions.png" in f for f in result_files)
         self.assertFalse(produced)
 
     def test_build_decision_tree(self):
@@ -279,45 +196,13 @@ class AutoMLExplainLevelsTest(unittest.TestCase):
 
         result_files = os.listdir(os.path.join(self.automl_dir, "1_DecisionTree"))
 
-        # There should be files with:
-        # - decision tree visualization
-        # - permutation importance
-        # - shap importance
-        # - shap dependence
-        # - shap decisions
-
-        # Check Decision Tree visualization
-        produced = False
-        for f in result_files:
-            if "tree.svg" in f:
-                produced = True
-                break
+        produced = any("tree.svg" in f for f in result_files)
         self.assertTrue(produced)
-        # Check permutation importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" not in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" not in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap importance
-        produced = False
-        for f in result_files:
-            if "importance.csv" in f and "shap" in f:
-                produced = True
-                break
+        produced = any("importance.csv" in f and "shap" in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap dependence
-        produced = False
-        for f in result_files:
-            if "dependence.png" in f:
-                produced = True
-                break
+        produced = any("dependence.png" in f for f in result_files)
         self.assertTrue(produced)
-        # Check shap decisions
-        produced = False
-        for f in result_files:
-            if "decisions.png" in f:
-                produced = True
-                break
+        produced = any("decisions.png" in f for f in result_files)
         self.assertTrue(produced)

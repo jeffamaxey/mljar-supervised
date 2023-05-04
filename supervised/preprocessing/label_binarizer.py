@@ -14,19 +14,19 @@ class LabelBinarizer(object):
         # self._uniq_values = [str(u) for u in self._uniq_values]
 
         if len(self._uniq_values) == 2:
-            self._new_columns.append(column + "_" + str(self._uniq_values[1]))
+            self._new_columns.append(f"{column}_{str(self._uniq_values[1])}")
         else:
             for v in self._uniq_values:
-                self._new_columns.append(column + "_" + str(v))
+                self._new_columns.append(f"{column}_{str(v)}")
 
     def transform(self, X, column):
         if len(self._uniq_values) == 2:
-            X[column + "_" + str(self._uniq_values[1])] = (
+            X[f"{column}_{str(self._uniq_values[1])}"] = (
                 X[column] == self._uniq_values[1]
             ).astype(int)
         else:
             for v in self._uniq_values:
-                X[column + "_" + str(v)] = (X[column] == v).astype(int)
+                X[f"{column}_{str(v)}"] = (X[column] == v).astype(int)
 
         X.drop(column, axis=1, inplace=True)
         return X
@@ -52,13 +52,11 @@ class LabelBinarizer(object):
         self._uniq_values = [
             i if type(i) != np.bool_ else bool(i) for i in list(self._uniq_values)
         ]
-        data_json = {
+        return {
             "new_columns": list(self._new_columns),
             "unique_values": self._uniq_values,
             "old_column": self._old_column,
         }
-
-        return data_json
 
     def from_json(self, data_json):
         self._new_columns = data_json.get("new_columns", None)

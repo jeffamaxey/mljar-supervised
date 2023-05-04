@@ -72,7 +72,7 @@ class RandomForestObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in RandomForestObjective", str(e))
+            print("Exception in RandomForestObjective", e)
             return None
 
         return score

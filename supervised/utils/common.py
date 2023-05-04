@@ -33,7 +33,6 @@ def get_fold_repeat_cnt(model_path):
 
 def get_learners_names(model_path):
     postfix = "_training.log"
-    learner_names = [
+    return [
         f.repleace(postfix, "") for f in os.listdir(model_path) if postfix in f
     ]
-    return learner_names

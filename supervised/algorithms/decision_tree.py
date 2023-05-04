@@ -65,7 +65,7 @@ def get_rules(tree, feature_names, class_names):
             rule += str(p)
         rule += " then "
         if class_names is None:
-            rule += "response: " + str(np.round(path[-1][0][0][0], 3))
+            rule += f"response: {str(np.round(path[-1][0][0][0], 3))}"
         else:
             classes = path[-1][0][0]
             l = np.argmax(classes)
@@ -149,7 +149,7 @@ class DecisionTreeAlgorithm(SklearnAlgorithm):
                     feature_names=X_train.columns,
                     class_names=class_names,
                 )
-                tree_file_plot = os.path.join(model_file_path, learner_name + "_tree.svg")
+                tree_file_plot = os.path.join(model_file_path, f"{learner_name}_tree.svg")
                 viz.save(tree_file_plot)
             except Exception as e:
                 logger.info(f"Problem when visualizing decision tree. {str(e)}")
@@ -229,7 +229,7 @@ class DecisionTreeRegressorAlgorithm(SklearnAlgorithm):
                         target_name="target",
                         feature_names=X_train.columns,
                     )
-                tree_file_plot = os.path.join(model_file_path, learner_name + "_tree.svg")
+                tree_file_plot = os.path.join(model_file_path, f"{learner_name}_tree.svg")
                 viz.save(tree_file_plot)
             except Exception as e:
                 logger.info(f"Problem when visuzalizin decision tree regressor. {str(e)}")

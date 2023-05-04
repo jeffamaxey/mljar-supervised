@@ -46,21 +46,19 @@ def time_constraint(env):
 def xgboost_eval_metric(ml_task, automl_eval_metric):
     # the mapping is almost the same
     eval_metric_name = automl_eval_metric
-    if ml_task == MULTICLASS_CLASSIFICATION:
-        if automl_eval_metric == "logloss":
-            eval_metric_name = "mlogloss"
+    if ml_task == MULTICLASS_CLASSIFICATION and eval_metric_name == "logloss":
+        eval_metric_name = "mlogloss"
     return eval_metric_name
 
 
 def xgboost_objective(ml_task, automl_eval_metric):
     objective = "reg:squarederror"
     if ml_task == BINARY_CLASSIFICATION:
-        objective = "binary:logistic"
+        return "binary:logistic"
     elif ml_task == MULTICLASS_CLASSIFICATION:
-        objective = "multi:softprob"
+        return "multi:softprob"
     else:  # ml_task == REGRESSION
-        objective = "reg:squarederror"
-    return objective
+        return "reg:squarederror"
 
 
 class XgbAlgorithm(BaseAlgorithm):
@@ -270,14 +268,11 @@ class XgbAlgorithm(BaseAlgorithm):
         dtrain = xgb.DMatrix(
             X.values if isinstance(X, pd.DataFrame) else X, missing=np.NaN
         )
-        if "iteration_range" in str(signature(self.model.predict)):
-            # the newer version
-            a = self.model.predict(dtrain, iteration_range=(0, self.best_ntree_limit))
-        else:
-            # the older interface
-            a = self.model.predict(dtrain, ntree_limit=self.best_ntree_limit)
-
-        return a
+        return (
+            self.model.predict(dtrain, iteration_range=(0, self.best_ntree_limit))
+            if "iteration_range" in str(signature(self.model.predict))
+            else self.model.predict(dtrain, ntree_limit=self.best_ntree_limit)
+        )
 
     def copy(self):
         return copy.deepcopy(self)
@@ -285,10 +280,10 @@ class XgbAlgorithm(BaseAlgorithm):
     def save(self, model_file_path):
         self.model.save_model(model_file_path)
         self.model_file_path = model_file_path
-        logger.debug("XgbAlgorithm save model to %s" % model_file_path)
+        logger.debug(f"XgbAlgorithm save model to {model_file_path}")
 
     def load(self, model_file_path):
-        logger.debug("XgbLearner load model from %s" % model_file_path)
+        logger.debug(f"XgbLearner load model from {model_file_path}")
         self.model = xgb.Booster()  # init model
         self.model.load_model(model_file_path)
         self.model_file_path = model_file_path
@@ -300,9 +295,7 @@ class XgbAlgorithm(BaseAlgorithm):
         metric = self.params.get("eval_metric")
         if metric is None:
             return None
-        if metric == "mlogloss":
-            return "logloss"
-        return metric
+        return "logloss" if metric == "mlogloss" else metric
 
 
 # For binary classification target should be 0, 1. There should be no NaNs in target.

@@ -27,7 +27,4 @@ class CallbackList(object):
             cb.on_framework_train_end(logs)
 
     def get(self, callback_name):
-        for cb in self.callbacks:
-            if cb.name == callback_name:
-                return cb
-        return None
+        return next((cb for cb in self.callbacks if cb.name == callback_name), None)

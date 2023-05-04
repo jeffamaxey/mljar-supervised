@@ -122,7 +122,7 @@ class XgboostObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in XgboostObjective", str(e))
+            print("Exception in XgboostObjective", e)
             return None
 
         return score

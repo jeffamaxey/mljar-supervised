@@ -74,7 +74,7 @@ class ExtraTreesObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in ExtraTreesObjective", str(e))
+            print("Exception in ExtraTreesObjective", e)
             return None
 
         return score

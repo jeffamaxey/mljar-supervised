@@ -23,8 +23,7 @@ import sys
 
 
 def log_loss_eps(y_true, y_pred):
-    ll = log_loss(y_true, y_pred, eps=1e-7)
-    return ll
+    return log_loss(y_true, y_pred, eps=1e-7)
 
 
 log_loss_scorer = make_scorer(log_loss_eps, greater_is_better=False, needs_proba=True)
@@ -43,10 +42,7 @@ class PermutationImportance:
         n_jobs=-1,
     ):
         # for scoring check https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
-        if ml_task == BINARY_CLASSIFICATION:
-            scoring = log_loss_scorer
-            model.classes_ = np.unique(y_validation)
-        elif ml_task == MULTICLASS_CLASSIFICATION:
+        if ml_task in [BINARY_CLASSIFICATION, MULTICLASS_CLASSIFICATION]:
             scoring = log_loss_scorer
             model.classes_ = np.unique(y_validation)
         else:
@@ -94,5 +90,5 @@ class PermutationImportance:
                 index=False,
             )
         except Exception as e:
-            print(str(e))
+            print(e)
             print("Problem during computing permutation importance. Skipping ...")

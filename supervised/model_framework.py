@@ -117,11 +117,11 @@ class ModelFramework:
             ).columns.tolist()[:-1]
         elif self._ml_task == BINARY_CLASSIFICATION:
             class_names = self.preprocessings[-1].get_target_class_names()
-            y_validation_columns = "prediction"
-            if not ("0" in class_names and "1" in class_names):
-                y_validation_columns = (
-                    f"prediction_0_for_{class_names[0]}_1_for_{class_names[1]}"
-                )
+            y_validation_columns = (
+                "prediction"
+                if ("0" in class_names and "1" in class_names)
+                else f"prediction_0_for_{class_names[0]}_1_for_{class_names[1]}"
+            )
         else:
             y_validation_columns = "prediction"
 
@@ -164,12 +164,7 @@ class ModelFramework:
             for k_fold in range(self.validation.get_n_splits()):
                 train_data, validation_data = self.validation.get_split(k_fold, repeat)
                 logger.debug(
-                    "Data split, train X:{} y:{}, validation X:{}, y:{}".format(
-                        train_data["X"].shape,
-                        train_data["y"].shape,
-                        validation_data["X"].shape,
-                        validation_data["y"].shape,
-                    )
+                    f'Data split, train X:{train_data["X"].shape} y:{train_data["y"].shape}, validation X:{validation_data["X"].shape}, y:{validation_data["y"].shape}'
                 )
                 if "sample_weight" in train_data:
                     logger.debug("Sample weight available during the training.")
@@ -334,8 +329,7 @@ class ModelFramework:
         return early_stopping.metric.name
 
     def get_metric(self):
-        early_stopping = self.callbacks.get("early_stopping")
-        if early_stopping:
+        if early_stopping := self.callbacks.get("early_stopping"):
             return early_stopping.metric
         return Metric({"name": self.get_metric_name()})
 
@@ -433,11 +427,7 @@ class ModelFramework:
 
         y_predicted_average = y_predicted / float(len(self.learners))
 
-        y_predicted_final = self.preprocessings[0].prepare_target_labels(
-            y_predicted_average
-        )
-
-        return y_predicted_final
+        return self.preprocessings[0].prepare_target_labels(y_predicted_average)
 
     def get_additional_metrics(self):
 

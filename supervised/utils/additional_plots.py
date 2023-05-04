@@ -103,7 +103,7 @@ class AdditionalPlots:
             ]
 
         except Exception as e:
-            print(str(e))
+            print(e)
 
         return figures
 
@@ -155,7 +155,7 @@ class AdditionalPlots:
             ]
             plt.close("all")
         except Exception as e:
-            print(str(e))
+            print(e)
 
         return figures
 
@@ -167,8 +167,7 @@ class AdditionalPlots:
             fig = plt.figure(figsize=(10, 7))
             ax1 = fig.add_subplot(1, 1, 1)
             samples = target.shape[0]
-            if samples > MAX_SAMPLES:
-                samples = MAX_SAMPLES
+            samples = min(samples, MAX_SAMPLES)
             ax1.scatter(
                 target[:samples], predictions[:samples], c="tab:blue", alpha=0.2
             )
@@ -211,7 +210,7 @@ class AdditionalPlots:
             plt.close("all")
 
         except Exception as e:
-            print(str(e))
+            print(e)
         return figures
 
     @staticmethod
@@ -225,4 +224,4 @@ class AdditionalPlots:
                 fout.write(f"\n## {title}\n\n")
                 fout.write(f"![{title}]({fname})\n\n")
         except Exception as e:
-            print(str(e))
+            print(e)

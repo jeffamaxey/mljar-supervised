@@ -109,39 +109,25 @@ class MljarTuner:
         if self._data_info is None:
             return False
 
-        # are there any continous
-        continous_cols = 0
-        for k, v in self._data_info["columns_info"].items():
-            if "categorical" not in v:
-                continous_cols += 1
-
+        continous_cols = sum(
+            1
+            for k, v in self._data_info["columns_info"].items()
+            if "categorical" not in v
+        )
         # too little columns
-        if continous_cols == 0:
-            return False
-
-        # too many columns
-        if continous_cols > 300:
-            return False
-
-        # all good, can apply kmeans
-        return True
+        return False if continous_cols == 0 else continous_cols <= 300
 
     def _can_apply_golden_features(self):
         if self._data_info is None:
             return False
 
-        # are there any continous
-        continous_cols = 0
-        for k, v in self._data_info["columns_info"].items():
-            if "categorical" not in v:
-                continous_cols += 1
-
+        continous_cols = sum(
+            1
+            for k, v in self._data_info["columns_info"].items()
+            if "categorical" not in v
+        )
         # too little columns
-        if continous_cols == 0:
-            return False
-
-        # all good, can apply golden features
-        return True
+        return continous_cols != 0
 
     def steps(self):
 
@@ -240,31 +226,27 @@ class MljarTuner:
                 return self.get_params_stack_models(stacked_models)
             elif step == "ensemble_stacked":
 
-                # do we have stacked models?
-                any_stacked = False
-                for m in models:
-                    if m._is_stacked:
-                        any_stacked = True
-                if not any_stacked:
-                    return []
-
-                return [
-                    {
-                        "model_type": "ensemble",
-                        "is_stacked": True,
-                        "name": "Ensemble_Stacked",
-                        "status": "initialized",
-                        "final_loss": None,
-                        "train_time": None,
-                    }
-                ]
-
+                any_stacked = any(m._is_stacked for m in models)
+                return (
+                    [
+                        {
+                            "model_type": "ensemble",
+                            "is_stacked": True,
+                            "name": "Ensemble_Stacked",
+                            "status": "initialized",
+                            "final_loss": None,
+                            "train_time": None,
+                        }
+                    ]
+                    if any_stacked
+                    else []
+                )
             # didnt find anything matching the step, return empty array
             return []
         except Exception as e:
             import traceback
 
-            print(str(e), traceback.format_exc())
+            print(e, traceback.format_exc())
             return []
 
     def get_params_stack_models(self, stacked_models):
@@ -336,7 +318,7 @@ class MljarTuner:
             generated_params[m.get_type()] += [params]
 
         return_params = []
-        for i in range(100):
+        for _ in range(100):
             total = 0
             for m in types_score_order:
                 if generated_params[m]:
@@ -349,9 +331,9 @@ class MljarTuner:
 
     def adjust_validation_params(self, models_cnt):
         generated_params = []
-        for model_type in ["Decision Tree"]:
-            models_to_check = 1
+        models_to_check = 1
 
+        for model_type in ["Decision Tree"]:
             logger.info(f"Generate parameters for {model_type} (#{models_cnt + 1})")
             params = self._get_model_params(model_type, seed=1)
             if params is None:
@@ -404,14 +386,9 @@ class MljarTuner:
             self._ml_task, model_type
         )
 
-        if max_rows_limit is not None:
-            if self._data_info["rows"] > max_rows_limit:
-                return True
-        if max_cols_limit is not None:
-            if self._data_info["cols"] > max_cols_limit:
-                return True
-
-        return False
+        if max_rows_limit is not None and self._data_info["rows"] > max_rows_limit:
+            return True
+        return max_cols_limit is not None and self._data_info["cols"] > max_cols_limit
 
     def default_params(self, models_cnt):
 
@@ -526,7 +503,7 @@ class MljarTuner:
             return_params += rest_params
         """
         return_params = []
-        for i in range(100):
+        for _ in range(100):
             total = 0
             for m in [
                 "LightGBM",
@@ -656,20 +633,27 @@ class MljarTuner:
                         few_categories = True
 
                     if convert_categorical:
-                        if strategy == PreprocessingTuner.CATEGORICALS_ALL_INT:
-                            new_preproc += [PreprocessingCategorical.CONVERT_INTEGER]
+                        if (
+                            strategy != PreprocessingTuner.CATEGORICALS_ALL_INT
+                            and strategy != PreprocessingTuner.CATEGORICALS_LOO
+                            and strategy == PreprocessingTuner.CATEGORICALS_MIX
+                            and few_categories
+                        ):
+                            new_preproc += [
+                                PreprocessingCategorical.CONVERT_ONE_HOT
+                            ]
+                        elif (
+                            strategy != PreprocessingTuner.CATEGORICALS_ALL_INT
+                            and strategy != PreprocessingTuner.CATEGORICALS_LOO
+                            and strategy == PreprocessingTuner.CATEGORICALS_MIX
+                            or strategy == PreprocessingTuner.CATEGORICALS_ALL_INT
+                        ):
+                            new_preproc += [
+                                PreprocessingCategorical.CONVERT_INTEGER
+                            ]
+
                         elif strategy == PreprocessingTuner.CATEGORICALS_LOO:
                             new_preproc += [PreprocessingCategorical.CONVERT_LOO]
-                        elif strategy == PreprocessingTuner.CATEGORICALS_MIX:
-                            if few_categories:
-                                new_preproc += [
-                                    PreprocessingCategorical.CONVERT_ONE_HOT
-                                ]
-                            else:
-                                new_preproc += [
-                                    PreprocessingCategorical.CONVERT_INTEGER
-                                ]
-
                     cols_preprocessing[col] = new_preproc
 
                 params["preprocessing"]["columns_preprocessing"] = cols_preprocessing
@@ -885,9 +869,7 @@ class MljarTuner:
             params["optuna_init_params"] = {}
 
         unique_params_key = MljarTuner.get_params_key(params)
-        if unique_params_key not in self._unique_params_keys:
-            return [params]
-        return None
+        return [params] if unique_params_key not in self._unique_params_keys else None
 
     def get_features_selection_params(
         self, current_models, results_path, total_time_limit
@@ -1021,7 +1003,7 @@ class MljarTuner:
             for k in sorted(params[main_key]):
                 if k in ["seed", "explain_level"]:
                     continue
-                key += "_{}_{}".format(k, params[main_key][k])
+                key += f"_{k}_{params[main_key][k]}"
         return key
 
     def add_key(self, model):

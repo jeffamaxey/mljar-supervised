@@ -84,7 +84,7 @@ class Preprocessing(object):
             # target preprocessing
             # this must be used first, maybe we will drop some rows because of missing target values
             target_preprocessing = self._params.get("target_preprocessing")
-            logger.debug("target_preprocessing params: {}".format(target_preprocessing))
+            logger.debug(f"target_preprocessing params: {target_preprocessing}")
 
             X_train, y_train, sample_weight = ExcludeRowsMissingTarget.transform(
                 X_train, y_train, sample_weight
@@ -316,7 +316,7 @@ class Preprocessing(object):
         # this must be used first, maybe we will drop some rows because of missing target values
         if y_validation is not None:
             target_preprocessing = self._params.get("target_preprocessing")
-            logger.debug("target_preprocessing -> {}".format(target_preprocessing))
+            logger.debug(f"target_preprocessing -> {target_preprocessing}")
 
             (
                 X_validation,
@@ -326,31 +326,43 @@ class Preprocessing(object):
                 X_validation, y_validation, sample_weight_validation
             )
 
-            if PreprocessingCategorical.CONVERT_INTEGER in target_preprocessing:
-                if y_validation is not None and self._categorical_y is not None:
-                    y_validation = pd.Series(
-                        self._categorical_y.transform(y_validation)
-                    )
+        if (
+            PreprocessingCategorical.CONVERT_INTEGER in target_preprocessing
+            and y_validation is not None
+            and self._categorical_y is not None
+        ):
+            y_validation = pd.Series(
+                self._categorical_y.transform(y_validation)
+            )
 
-            if PreprocessingCategorical.CONVERT_ONE_HOT in target_preprocessing:
-                if y_validation is not None and self._categorical_y is not None:
-                    y_validation = self._categorical_y.transform(
-                        pd.DataFrame({"target": y_validation}), "target"
-                    )
+        if (
+            PreprocessingCategorical.CONVERT_ONE_HOT in target_preprocessing
+            and y_validation is not None
+            and self._categorical_y is not None
+        ):
+            y_validation = self._categorical_y.transform(
+                pd.DataFrame({"target": y_validation}), "target"
+            )
 
-            if Scale.SCALE_LOG_AND_NORMAL in target_preprocessing:
-                if self._scale_y is not None and y_validation is not None:
-                    logger.debug("Transform log and normalize")
-                    y_validation = pd.DataFrame({"target": y_validation})
-                    y_validation = self._scale_y.transform(y_validation)
-                    y_validation = y_validation["target"]
+        if (
+            Scale.SCALE_LOG_AND_NORMAL in target_preprocessing
+            and self._scale_y is not None
+            and y_validation is not None
+        ):
+            logger.debug("Transform log and normalize")
+            y_validation = pd.DataFrame({"target": y_validation})
+            y_validation = self._scale_y.transform(y_validation)
+            y_validation = y_validation["target"]
 
-            if Scale.SCALE_NORMAL in target_preprocessing:
-                if self._scale_y is not None and y_validation is not None:
-                    logger.debug("Transform normalize")
-                    y_validation = pd.DataFrame({"target": y_validation})
-                    y_validation = self._scale_y.transform(y_validation)
-                    y_validation = y_validation["target"]
+        if (
+            Scale.SCALE_NORMAL in target_preprocessing
+            and self._scale_y is not None
+            and y_validation is not None
+        ):
+            logger.debug("Transform normalize")
+            y_validation = pd.DataFrame({"target": y_validation})
+            y_validation = self._scale_y.transform(y_validation)
+            y_validation = y_validation["target"]
 
         # columns preprocessing
         if len(self._remove_columns) and X_validation is not None:
@@ -444,91 +456,78 @@ class Preprocessing(object):
 
     def get_target_class_names(self):
         pos_label, neg_label = "1", "0"
-        if self._categorical_y is not None:
-            if self._params["ml_task"] == BINARY_CLASSIFICATION:
-                # binary classification
-                for label, value in self._categorical_y.to_json().items():
-                    if value == 1:
-                        pos_label = label
-                    else:
-                        neg_label = label
-                return [neg_label, pos_label]
-            else:
+        if self._categorical_y is None:  # self._categorical_y is None
+            if (
+                "ml_task" in self._params
+                and self._params["ml_task"] == BINARY_CLASSIFICATION
+            ):
+                return ["0", "1"]
+        elif self._params["ml_task"] == BINARY_CLASSIFICATION:
+            # binary classification
+            for label, value in self._categorical_y.to_json().items():
+                if value == 1:
+                    pos_label = label
+                else:
+                    neg_label = label
+            return [neg_label, pos_label]
+        else:
                 # multiclass classification
                 # logger.debug(self._categorical_y.to_json())
-                if "unique_values" not in self._categorical_y.to_json():
-                    labels = dict(
-                        (v, k) for k, v in self._categorical_y.to_json().items()
-                    )
-                else:
-                    labels = {
-                        i: v
-                        for i, v in enumerate(
-                            self._categorical_y.to_json()["unique_values"]
-                        )
-                    }
+            labels = (
+                {v: k for k, v in self._categorical_y.to_json().items()}
+                if "unique_values" not in self._categorical_y.to_json()
+                else dict(
+                    enumerate(self._categorical_y.to_json()["unique_values"])
+                )
+            )
+            return list(labels.values())
 
-                return list(labels.values())
-
-        else:  # self._categorical_y is None
-            if "ml_task" in self._params:
-                if self._params["ml_task"] == BINARY_CLASSIFICATION:
-                    return ["0", "1"]
         return []
 
     def prepare_target_labels(self, y):
         pos_label, neg_label = "1", "0"
 
-        if self._categorical_y is not None:
-            if len(y.shape) == 1:
-                # binary classification
-                for label, value in self._categorical_y.to_json().items():
-                    if value == 1:
-                        pos_label = label
-                    else:
-                        neg_label = label
-                # threshold is applied in AutoML class
-                return pd.DataFrame(
-                    {
-                        "prediction_{}".format(neg_label): 1 - y,
-                        "prediction_{}".format(pos_label): y,
-                    }
-                )
-            else:
-                # multiclass classification
-                if "unique_values" not in self._categorical_y.to_json():
-                    labels = dict(
-                        (v, k) for k, v in self._categorical_y.to_json().items()
-                    )
-                else:
-                    labels = {
-                        i: v
-                        for i, v in enumerate(
-                            self._categorical_y.to_json()["unique_values"]
-                        )
-                    }
-
-                d = {}
-                cols = []
-                for i in range(y.shape[1]):
-                    d["prediction_{}".format(labels[i])] = y[:, i]
-                    cols += ["prediction_{}".format(labels[i])]
-                df = pd.DataFrame(d)
-                df["label"] = np.argmax(np.array(df[cols]), axis=1)
-
-                df["label"] = df["label"].map(labels)
-
-                return df
-        else:  # self._categorical_y is None
+        if self._categorical_y is None:  # self._categorical_y is None
             if "ml_task" in self._params:
                 if self._params["ml_task"] == BINARY_CLASSIFICATION:
                     return pd.DataFrame({"prediction_0": 1 - y, "prediction_1": y})
                 elif self._params["ml_task"] == MULTICLASS_CLASSIFICATION:
                     return pd.DataFrame(
                         data=y,
-                        columns=["prediction_{}".format(i) for i in range(y.shape[1])],
+                        columns=[f"prediction_{i}" for i in range(y.shape[1])],
                     )
 
+        elif len(y.shape) == 1:
+            # binary classification
+            for label, value in self._categorical_y.to_json().items():
+                if value == 1:
+                    pos_label = label
+                else:
+                    neg_label = label
+                # threshold is applied in AutoML class
+            return pd.DataFrame(
+                {f"prediction_{neg_label}": 1 - y, f"prediction_{pos_label}": y}
+            )
+        else:
+                # multiclass classification
+            labels = (
+                {v: k for k, v in self._categorical_y.to_json().items()}
+                if "unique_values" not in self._categorical_y.to_json()
+                else dict(
+                    enumerate(self._categorical_y.to_json()["unique_values"])
+                )
+            )
+            d = {}
+            cols = []
+            for i in range(y.shape[1]):
+                d[f"prediction_{labels[i]}"] = y[:, i]
+                cols += [f"prediction_{labels[i]}"]
+            df = pd.DataFrame(d)
+            df["label"] = np.argmax(np.array(df[cols]), axis=1)
+
+            df["label"] = df["label"].map(labels)
+
+            return df
         return pd.DataFrame({"prediction": y})
 
     def to_json(self):
@@ -536,32 +535,22 @@ class Preprocessing(object):
         if self._remove_columns:
             preprocessing_params["remove_columns"] = self._remove_columns
         if self._missing_values is not None and len(self._missing_values):
-            mvs = []  # refactor
-            for mv in self._missing_values:
-                if mv.to_json():
-                    mvs += [mv.to_json()]
-            if mvs:
+            if mvs := [
+                mv.to_json() for mv in self._missing_values if mv.to_json()
+            ]:
                 preprocessing_params["missing_values"] = mvs
         if self._categorical is not None and len(self._categorical):
-            cats = []  # refactor
-            for cat in self._categorical:
-                if cat.to_json():
-                    cats += [cat.to_json()]
-            if cats:
+            if cats := [
+                cat.to_json() for cat in self._categorical if cat.to_json()
+            ]:
                 preprocessing_params["categorical"] = cats
 
         if self._datetime_transforms is not None and len(self._datetime_transforms):
-            dtts = []
-            for dtt in self._datetime_transforms:
-                dtts += [dtt.to_json()]
-            if dtts:
+            if dtts := [dtt.to_json() for dtt in self._datetime_transforms]:
                 preprocessing_params["datetime_transforms"] = dtts
 
         if self._text_transforms is not None and len(self._text_transforms):
-            tts = []
-            for tt in self._text_transforms:
-                tts += [tt.to_json()]
-            if tts:
+            if tts := [tt.to_json() for tt in self._text_transforms]:
                 preprocessing_params["text_transforms"] = tts
 
         if self._golden_features is not None:
@@ -571,12 +560,10 @@ class Preprocessing(object):
             preprocessing_params["kmeans"] = self._kmeans.to_json()
 
         if self._scale is not None and len(self._scale):
-            scs = [sc.to_json() for sc in self._scale if sc.to_json()]
-            if scs:
+            if scs := [sc.to_json() for sc in self._scale if sc.to_json()]:
                 preprocessing_params["scale"] = scs
         if self._categorical_y is not None:
-            cat_y = self._categorical_y.to_json()
-            if cat_y:
+            if cat_y := self._categorical_y.to_json():
                 preprocessing_params["categorical_y"] = cat_y
         if self._scale_y is not None:
             preprocessing_params["scale_y"] = self._scale_y.to_json()

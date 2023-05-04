@@ -51,7 +51,6 @@ class TimeController:
             return tc
         except Exception as e:
             logger.error(f"Cant load TimeController from json, {str(e)}")
-            pass
         return None
 
     def already_spend(self):
@@ -61,19 +60,6 @@ class TimeController:
 
         if self._total_time_limit is None:
             return 7 * 24 * 3600  # 7 days
-
-        ratios = {
-            "default_algorithms": 0.3,
-            "not_so_random": 0.35,
-            "mix_encoding": 0.05,
-            "golden_features": 0.05,
-            "kmeans_features": 0.05,
-            "insert_random_feature": 0.05,
-            "features_selection": 0.05,
-            "hill_climbing_1": 0.2,  # enough to have only first step from hill climbing
-            "boost_on_errors": 0.05,
-            "stack": 0.2,
-        }
 
         if (
             fit_level
@@ -91,11 +77,20 @@ class TimeController:
             or "hill_climbing" in fit_level
         ):
 
-            ratio = 0
-            for k, v in ratios.items():
-                if k in self._steps:
-                    ratio += v
+            ratios = {
+                "default_algorithms": 0.3,
+                "not_so_random": 0.35,
+                "mix_encoding": 0.05,
+                "golden_features": 0.05,
+                "kmeans_features": 0.05,
+                "insert_random_feature": 0.05,
+                "features_selection": 0.05,
+                "hill_climbing_1": 0.2,  # enough to have only first step from hill climbing
+                "boost_on_errors": 0.05,
+                "stack": 0.2,
+            }
 
+            ratio = sum(v for k, v in ratios.items() if k in self._steps)
             fl = fit_level
             if "hill_climbing" in fit_level:
                 fl = "hill_climbing_1"
@@ -109,10 +104,7 @@ class TimeController:
                 )
                 ratio /= float(hill_climbing_cnt)
 
-            should_use = self._total_time_limit * ratio
-
-            return should_use
-
+            return self._total_time_limit * ratio
         return 0
 
     def compound_time_should_use(self, fit_level):
@@ -142,11 +134,7 @@ class TimeController:
         total_time_spend = time.time() - self._start_time
         compound = self.compound_time_should_use(fit_level)
         # print("Enough time for step", fit_level, np.round(total_time_spend,2), np.round(compound,2))
-        if total_time_spend > compound:
-            # dont train more
-            return False
-
-        return True
+        return total_time_spend <= compound
 
     def enough_time_for_model(self, model_type):
         if self._total_time_limit is None:
@@ -205,10 +193,7 @@ class TimeController:
 
         # stacked models converge faster
         # dont need to check ...
-        if step == "stack":
-            return True
-        # check if there is enough time for model to train
-        return self.enough_time_for_model(model_type)
+        return True if step == "stack" else self.enough_time_for_model(model_type)
 
     def learner_time_limit(self, model_type, fit_level, k_folds):
 

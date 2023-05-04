@@ -23,9 +23,3 @@ class EncodingSelector:
             pass
 
         return PreprocessingCategorical.MANY_CATEGORIES
-        """
-        if unique_cnt <= 2 or unique_cnt > 25:
-            return PreprocessingCategorical.CONVERT_INTEGER
-
-        return PreprocessingCategorical.CONVERT_ONE_HOT
-        """

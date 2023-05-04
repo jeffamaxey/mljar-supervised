@@ -32,12 +32,11 @@ logger.setLevel(LOG_LEVEL)
 def lightgbm_objective(ml_task, automl_eval_metric):
     objective = "regression"
     if ml_task == BINARY_CLASSIFICATION:
-        objective = "binary"
+        return "binary"
     elif ml_task == MULTICLASS_CLASSIFICATION:
-        objective = "multiclass"
+        return "multiclass"
     else:  # ml_task == REGRESSION
-        objective = "regression"
-    return objective
+        return "regression"
 
 
 def lightgbm_eval_metric(ml_task, automl_eval_metric):
@@ -277,10 +276,10 @@ class LightgbmAlgorithm(BaseAlgorithm):
     def save(self, model_file_path):
         self.model.save_model(model_file_path)
         self.model_file_path = model_file_path
-        logger.debug("LightgbmAlgorithm save model to %s" % model_file_path)
+        logger.debug(f"LightgbmAlgorithm save model to {model_file_path}")
 
     def load(self, model_file_path):
-        logger.debug("LightgbmAlgorithm load model from %s" % model_file_path)
+        logger.debug(f"LightgbmAlgorithm load model from {model_file_path}")
         self.model_file_path = model_file_path
         self.model = lgb.Booster(model_file=model_file_path)
 
@@ -292,11 +291,7 @@ class LightgbmAlgorithm(BaseAlgorithm):
             return None
         if metric == "custom":
             return custom_metric
-        if metric == "binary_logloss":
-            return "logloss"
-        elif metric == "multi_logloss":
-            return "logloss"
-        return metric
+        return "logloss" if metric in ["binary_logloss", "multi_logloss"] else metric
 
 
 lgbm_bin_params = {

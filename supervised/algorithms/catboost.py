@@ -233,19 +233,18 @@ class CatBoostAlgorithm(BaseAlgorithm):
             verbose_eval=False,
         )
 
-        if self.model.best_iteration_ is not None:
-            if model_init is not None:
-                self.best_ntree_limit = (
-                    self.model.best_iteration_ + model_init.tree_count_ + 1
-                )
-            else:
-                self.best_ntree_limit = self.model.best_iteration_ + 1
-
-        else:
+        if self.model.best_iteration_ is None:
             # just take all the trees
             # the warm-up trees are already included
             # dont need to add +1
             self.best_ntree_limit = self.model.tree_count_
+
+        elif model_init is not None:
+            self.best_ntree_limit = (
+                self.model.best_iteration_ + model_init.tree_count_ + 1
+            )
+        else:
+            self.best_ntree_limit = self.model.best_iteration_ + 1
 
         if log_to_file is not None:
             train_scores = self.model.evals_result_["learn"].get(self.log_metric_name)
@@ -264,11 +263,8 @@ class CatBoostAlgorithm(BaseAlgorithm):
                         + validation_scores
                     )
             iteration = None
-            if train_scores is not None:
+            if train_scores is not None or validation_scores is not None:
                 iteration = range(len(validation_scores))
-            elif validation_scores is not None:
-                iteration = range(len(validation_scores))
-
             result = pd.DataFrame(
                 {
                     "iteration": iteration,
@@ -296,10 +292,10 @@ class CatBoostAlgorithm(BaseAlgorithm):
     def save(self, model_file_path):
         self.model.save_model(model_file_path)
         self.model_file_path = model_file_path
-        logger.debug("CatBoostAlgorithm save model to %s" % model_file_path)
+        logger.debug(f"CatBoostAlgorithm save model to {model_file_path}")
 
     def load(self, model_file_path):
-        logger.debug("CatBoostLearner load model from %s" % model_file_path)
+        logger.debug(f"CatBoostLearner load model from {model_file_path}")
 
         # waiting for fix https://github.com/catboost/catboost/issues/696
         Algo = CatBoostClassifier

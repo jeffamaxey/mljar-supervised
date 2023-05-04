@@ -63,9 +63,7 @@ class EarlyStopping(Callback):
             target_cols = [c for c in self.best_y_oof.columns if "prediction" not in c]
             prediction_cols = [c for c in self.best_y_oof.columns if "prediction" in c]
 
-            aggs = {}
-            for t in target_cols:
-                aggs[t] = "first"
+            aggs = {t: "first" for t in target_cols}
             for p in prediction_cols:
                 aggs[p] = "mean"
             # aggregate predictions from repeats
@@ -173,13 +171,7 @@ class EarlyStopping(Callback):
             self.learner.stop_training = True
 
         logger.info(
-            "EarlyStopping.on_iteration_end, train loss: {}, validation loss: {}, "
-            "no improvement cnt {}, iters {}".format(
-                train_loss,
-                validation_loss,
-                self.no_improvement_cnt,
-                len(self.loss_values[self.learner.uid]["iters"]),
-            )
+            f'EarlyStopping.on_iteration_end, train loss: {train_loss}, validation loss: {validation_loss}, no improvement cnt {self.no_improvement_cnt}, iters {len(self.loss_values[self.learner.uid]["iters"])}'
         )
 
         if self.log_to_dir is not None and self.learner.algorithm_short_name not in [
@@ -198,8 +190,4 @@ class EarlyStopping(Callback):
                 fout.write(f"{iteration},{sign*train_loss},{sign*validation_loss}\n")
 
     def get_status(self):
-        return "Train loss: {}, Validation loss: {} @ iteration {}".format(
-            self.loss_values[self.learner.uid]["train"][-1],
-            self.loss_values[self.learner.uid]["validation"][-1],
-            len(self.loss_values[self.learner.uid]["iters"]),
-        )
+        return f'Train loss: {self.loss_values[self.learner.uid]["train"][-1]}, Validation loss: {self.loss_values[self.learner.uid]["validation"][-1]} @ iteration {len(self.loss_values[self.learner.uid]["iters"])}'

@@ -86,9 +86,9 @@ class PlotSHAP:
             y_vald = y_validation
         return X_vald, y_vald
 
-    def get_predictions(algorithm, X_vald, y_vald, ml_task):
+    def get_predictions(self, X_vald, y_vald, ml_task):
         # compute predictions on down-sampled data
-        predictions = algorithm.predict(X_vald)
+        predictions = self.predict(X_vald)
 
         if ml_task == MULTICLASS_CLASSIFICATION:
             oh = OneHotEncoder(sparse=False)
@@ -108,10 +108,7 @@ class PlotSHAP:
     @staticmethod
     def summary(shap_values, X_vald, model_file_path, learner_name, class_names):
         fig = plt.gcf()
-        classes = None
-        if class_names is not None and len(class_names):
-            classes = class_names
-
+        classes = class_names if class_names is not None and len(class_names) else None
         shap.summary_plot(
             shap_values, X_vald, plot_type="bar", show=False, class_names=classes
         )

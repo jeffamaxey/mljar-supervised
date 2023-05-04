@@ -141,7 +141,7 @@ class CatBoostObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in CatBoostObjective", str(e))
+            print("Exception in CatBoostObjective", e)
             # import traceback
             # print(traceback.format_exc())
             return None

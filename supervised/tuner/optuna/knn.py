@@ -59,7 +59,7 @@ class KNNObjective:
         except optuna.exceptions.TrialPruned as e:
             raise e
         except Exception as e:
-            print("Exception in KNNObjective", str(e))
+            print("Exception in KNNObjective", e)
             return None
 
         return score

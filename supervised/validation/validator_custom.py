@@ -100,7 +100,7 @@ class CustomValidator(BaseValidator):
             import traceback
 
             print(traceback.format_exc())
-            raise AutoMLException("Problem with custom validation. " + str(e))
+            raise AutoMLException(f"Problem with custom validation. {str(e)}")
         return (train_data, validation_data)
 
     def get_n_splits(self):

@@ -65,20 +65,19 @@ class PreprocessingCategorical(object):
             and self._columns
         ):
             return self._enc.transform(X)
-        else:
-            for column, lbl_params in self._convert_params.items():
-                if "unique_values" in lbl_params and "new_columns" in lbl_params:
-                    # convert to one hot
-                    lbl = LabelBinarizer()
-                    lbl.from_json(lbl_params)
-                    X = lbl.transform(X, column)
-                else:
-                    # convert to integer
-                    lbl = LabelEncoder()
-                    lbl.from_json(lbl_params)
-                    X.loc[:, column] = lbl.transform(X.loc[:, column])
+        for column, lbl_params in self._convert_params.items():
+            if "unique_values" in lbl_params and "new_columns" in lbl_params:
+                # convert to one hot
+                lbl = LabelBinarizer()
+                lbl.from_json(lbl_params)
+                X = lbl.transform(X, column)
+            else:
+                # convert to integer
+                lbl = LabelEncoder()
+                lbl.from_json(lbl_params)
+                X.loc[:, column] = lbl.transform(X.loc[:, column])
 
-            return X
+        return X
 
     def inverse_transform(self, X):
         for column, lbl_params in self._convert_params.items():
@@ -101,20 +100,18 @@ class PreprocessingCategorical(object):
             self._convert_method == PreprocessingCategorical.CONVERT_LOO
             and self._columns
         ):
-            params = {
+            return {
                 "enc": self._enc.to_json(),
                 "convert_method": self._convert_method,
                 "columns": self._columns,
             }
-        else:
-            if len(self._convert_params) == 0:
-                return {}
-            params = {
-                "convert_method": self._convert_method,
-                "convert_params": self._convert_params,
-                "columns": self._columns,
-            }
-        return params
+        if len(self._convert_params) == 0:
+            return {}
+        return {
+            "convert_method": self._convert_method,
+            "convert_params": self._convert_params,
+            "columns": self._columns,
+        }
 
     def from_json(self, params):
         if params is not None:

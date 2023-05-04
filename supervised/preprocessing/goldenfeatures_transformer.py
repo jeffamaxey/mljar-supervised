@@ -21,24 +21,21 @@ def get_binary_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict_proba(X_test)[:, 1]
-    ll = log_loss(y_test, pred)
-    return ll
+    return log_loss(y_test, pred)
 
 
 def get_regression_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeRegressor(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict(X_test)
-    ll = mean_squared_error(y_test, pred)
-    return ll
+    return mean_squared_error(y_test, pred)
 
 
 def get_multiclass_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict_proba(X_test)
-    ll = log_loss(y_test, pred)
-    return ll
+    return log_loss(y_test, pred)
 
 
 def get_score(item):
@@ -56,7 +53,7 @@ def get_score(item):
         diff_score = scorer(x_train, y_train, x_test, y_test)
     except Exception as e:
         diff_score = None
-        print(str(e))
+        print(e)
 
     try:
         a, b = (
@@ -68,7 +65,7 @@ def get_score(item):
         x_test = np.divide(a, b, out=np.zeros_like(a), where=b != 0).reshape(-1, 1)
         ratio_1_score = scorer(x_train, y_train, x_test, y_test)
     except Exception as e:
-        print(str(e))
+        print(e)
         ratio_1_score = None
 
     try:
@@ -81,7 +78,7 @@ def get_score(item):
         x_test = np.divide(a, b, out=np.zeros_like(a), where=b != 0).reshape(-1, 1)
         ratio_2_score = scorer(x_train, y_train, x_test, y_test)
     except Exception as e:
-        print(str(e))
+        print(e)
         ratio_2_score = None
 
     try:
@@ -90,7 +87,7 @@ def get_score(item):
         sum_score = scorer(x_train, y_train, x_test, y_test)
     except Exception as e:
         sum_score = None
-        print(str(e))
+        print(e)
 
     try:
         x_train = np.array(X_train[col1] * X_train[col2]).reshape(-1, 1)
@@ -98,7 +95,7 @@ def get_score(item):
         multiply_score = scorer(x_train, y_train, x_test, y_test)
     except Exception as e:
         multiply_score = None
-        print(str(e))
+        print(e)
 
     return (diff_score, ratio_1_score, ratio_2_score, sum_score, multiply_score)
 
@@ -135,7 +132,6 @@ class GoldenFeaturesTransformer(object):
                 "Golden Features not created due to error (please check errors.md). "
                 + self._error
             )
-            return
         if X.shape[1] == 0:
             self._error = f"Golden Features not created. No continous features. Input data shape: {X.shape}, {y.shape}"
             self.save()
@@ -143,7 +139,7 @@ class GoldenFeaturesTransformer(object):
 
         start_time = time.time()
         combinations = itertools.combinations(X.columns, r=2)
-        items = [i for i in combinations]
+        items = list(combinations)
         if len(items) > 250000:
             si = np.random.choice(len(items), 250000, replace=False)
             items = [items[i] for i in si]
@@ -265,14 +261,9 @@ class GoldenFeaturesTransformer(object):
     def _subsample(self, X, y):
 
         MAX_SIZE = 10000
-        TRAIN_SIZE = 2500
-
         shuffle = True
-        stratify = None
-
+        stratify = y if self._ml_task != REGRESSION else None
         if X.shape[0] > MAX_SIZE:
-            if self._ml_task != REGRESSION:
-                stratify = y
             X_train, _, y_train, _ = train_test_split(
                 X,
                 y,
@@ -284,6 +275,8 @@ class GoldenFeaturesTransformer(object):
             if self._ml_task != REGRESSION:
                 stratify = y_train
 
+            TRAIN_SIZE = 2500
+
             X_train, X_test, y_train, y_test = train_test_split(
                 X_train,
                 y_train,
@@ -293,8 +286,6 @@ class GoldenFeaturesTransformer(object):
                 random_state=1,
             )
         else:
-            if self._ml_task != REGRESSION:
-                stratify = y
             train_size = X.shape[0] // 4
             X_train, X_test, y_train, y_test = train_test_split(
                 X,

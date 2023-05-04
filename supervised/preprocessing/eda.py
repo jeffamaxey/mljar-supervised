@@ -33,7 +33,7 @@ class EDA:
     @staticmethod
     def prepare(column):
         """Prepare the column to be used as file name."""
-        valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+        valid_chars = f"-_.() {string.ascii_letters}{string.digits}"
         valid_chars = frozenset(valid_chars)
         col = "".join(c for c in column if c in valid_chars)
         if not len(col):
@@ -49,8 +49,7 @@ class EDA:
     @staticmethod
     def plot_path(eda_path, column):
         """Returns full path for the plot based on the column name."""
-        fname = os.path.join(eda_path, EDA.plot_fname(column))
-        return fname
+        return os.path.join(eda_path, EDA.plot_fname(column))
 
     @staticmethod
     def compute(X, y, eda_path):
@@ -189,12 +188,11 @@ class EDA:
                 f"AutoML EDA column limit exceeded! running for first {MAXCOL} columns"
             )
 
-        if save_path:
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-        else:
+        if not save_path:
             raise ValueError("Please provide a valid path to save the Extensive EDA")
 
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
         plt.style.use("ggplot")
         try:
 
@@ -289,7 +287,7 @@ class EDA:
                         plt.plot(X[col], y)
                         plt.gca().set_xticklabels(X[col].dt.date, rotation="45")
                         plt.gca().set_title(
-                            f"Distribution of target over time",
+                            "Distribution of target over time",
                             fontsize=11,
                             weight="bold",
                             alpha=0.75,
@@ -315,7 +313,7 @@ class EDA:
                 for col in X.columns:
 
                     fout.write(f"## Bivariate analysis of {col} feature with target\n")
-                    fout.write("\n![]({})\n".format(EDA.plot_fname(col + "_target")))
+                    fout.write(f'\n![]({EDA.plot_fname(col + "_target")})\n')
                     fout.write("\n")
                     fout.write(
                         "------------------------------------------------------\n"

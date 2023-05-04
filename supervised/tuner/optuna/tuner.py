@@ -52,7 +52,7 @@ class OptunaTuner:
             try:
                 os.mkdir(self.study_dir)
             except Exception as e:
-                print("Problem while creating directory for optuna studies.", str(e))
+                print("Problem while creating directory for optuna studies.", e)
         self.tuning_fname = os.path.join(self.study_dir, "optuna.json")
         self.tuning = init_params
         self.eval_metric = eval_metric
@@ -220,11 +220,23 @@ class OptunaTuner:
 
         self.plot_study(algorithm, data_type, study)
 
-        joblib.dump(study, os.path.join(self.study_dir, key + ".joblib"))
+        joblib.dump(study, os.path.join(self.study_dir, f"{key}.joblib"))
 
         best = study.best_params
 
-        if algorithm == "LightGBM":
+        if algorithm == "CatBoost":
+            best["eval_metric"] = objective.eval_metric_name
+            best["num_boost_round"] = objective.rounds
+            best["early_stopping_rounds"] = objective.early_stopping_rounds
+            # best["bootstrap_type"] = "Bernoulli"
+            # best["learning_rate"] = objective.learning_rate
+            best["seed"] = objective.seed
+        elif algorithm in ["Extra Trees", "Random Forest"]:
+            # Extra Trees are not using early stopping
+            best["max_steps"] = objective.max_steps  # each step has 100 trees
+            best["seed"] = objective.seed
+            best["eval_metric_name"] = self.eval_metric.name
+        elif algorithm == "LightGBM":
             best["metric"] = objective.eval_metric_name
             best["custom_eval_metric_name"] = objective.custom_eval_metric_name
             best["num_boost_round"] = objective.rounds
@@ -233,13 +245,8 @@ class OptunaTuner:
             best["cat_feature"] = self.cat_features_indices
             best["feature_pre_filter"] = False
             best["seed"] = objective.seed
-        elif algorithm == "CatBoost":
-            best["eval_metric"] = objective.eval_metric_name
-            best["num_boost_round"] = objective.rounds
-            best["early_stopping_rounds"] = objective.early_stopping_rounds
-            # best["bootstrap_type"] = "Bernoulli"
-            # best["learning_rate"] = objective.learning_rate
-            best["seed"] = objective.seed
+        elif algorithm == "Nearest Neighbors":
+            best["rows_limit"] = 100000
         elif algorithm == "Xgboost":
             best["objective"] = objective.objective
             best["eval_metric"] = objective.eval_metric_name
@@ -247,21 +254,6 @@ class OptunaTuner:
             best["max_rounds"] = objective.rounds
             best["early_stopping_rounds"] = objective.early_stopping_rounds
             best["seed"] = objective.seed
-        elif algorithm == "Extra Trees":
-            # Extra Trees are not using early stopping
-            best["max_steps"] = objective.max_steps  # each step has 100 trees
-            best["seed"] = objective.seed
-            best["eval_metric_name"] = self.eval_metric.name
-        elif algorithm == "Random Forest":
-            # Random Forest is not using early stopping
-            best["max_steps"] = objective.max_steps  # each step has 100 trees
-            best["seed"] = objective.seed
-            best["eval_metric_name"] = self.eval_metric.name
-        elif algorithm == "Nearest Neighbors":
-            best["rows_limit"] = 100000
-        elif algorithm == "Neural Network":
-            pass
-
         self.tuning[key] = best
         self.save()
 
@@ -322,7 +314,7 @@ class OptunaTuner:
                     md += f"![{algorithm} {data_type} {title}]({fname})\n\n"
 
             except Exception as e:
-                print(str(e))
+                print(e)
 
         matplotlib.rcParams["figure.figsize"] = matplotlib_default_figsize
         plt.style.use("default")

@@ -53,7 +53,7 @@ class TotalTimeConstraintTest(unittest.TestCase):
         }
         callback = TotalTimeConstraint(params)
 
-        for i in range(10):
+        for _ in range(10):
             callback.add_and_set_learner(learner={})
             callback.on_learner_train_start(logs=None)
             callback.on_learner_train_end(logs=None)
